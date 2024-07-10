@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+</head>
+<body>
+    <h1>Prediction Result</h1>
+    <p>Predicted expression: {{ expression }}</p>
+    <div>
+        <h2>Analytics</h2>
+        <div id="analytics">
+            <p>Interested: {{ analytics.interested }}</p>
+            <p>Not Interested: {{ analytics.not_interested }}</p>
+        </div>
+    </div>
+    <script>
+        async function fetchAnalytics() {
+            const response = await fetch('/get_analytics');
+            const data = await response.json();
+            document.getElementById('analytics').innerHTML = `
+                <p>Interested: ${data.interested}</p>
+                <p>Not Interested: ${data.not_interested}</p>
+            `;
+        }
+        setInterval(fetchAnalytics, 5000); // Refresh analytics every 5 seconds
+    </script>
+</body>
+</html>

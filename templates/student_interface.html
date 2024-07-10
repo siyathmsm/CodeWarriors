@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conduct Interface</title>
+    <link rel="stylesheet" href="../static/student_interface.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* CSS for modal */
+        #confirmationModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-content p {
+            margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .modal-buttons button:first-child {
+            background-color: #d33;
+            color: #fff;
+        }
+        .modal-buttons button:last-child {
+            background-color: #007bff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Session Monitoring</h1>
+    <div class="container">
+        <div class="main-content">
+            <video id="localVideo" width="640" height="480" autoplay></video>
+        </div>
+        <div id="controls">
+            <button id="muteButton">Mute</button>
+            <button id="videoButton">Disable Video</button>
+            <button id="shareScreenButton">Share Screen</button>
+            <button id="participantsButton">Participants</button>
+            <button id="chatButton">Chat</button>
+            <button id="leaveButton">Leave</button>
+        </div>
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="resizer"></div>
+        <div id="participantsList" class="participants-section">
+            <h3>Participants</h3>
+            <ul id="participants"></ul>
+        </div>
+        <div id="chatArea" class="chat-section">
+            <h3>Chat</h3>
+            <div id="messages"></div>
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button id="sendMessageButton">Send</button>
+        </div>
+    </div>
+    
+    <script src="../static/student_interface.js"></script>
+    <script src="server.js"></script>
+    <script src="upload_image.js"></script>
+    <script src="broadcast_API.js"></script>
+    <script>
+        function captureImage() {
+            const video = document.getElementById('localVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png');
+            return dataURL;
+        }
+
+        function sendImage() {
+            const image = captureImage();
+            fetch('/process_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: image }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function startCapture() {
+            setInterval(sendImage, 20000); // Capture and send image every 20 seconds
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const constraints = { video: true };
+            const video = document.getElementById('localVideo');
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then((stream) => {
+                    video.srcObject = stream;
+                    video.play();
+                });
+
+            startCapture();
+        });
+
+        document.getElementById('leaveButton').addEventListener('click', () => {
+            if (confirm('Are you sure you want to leave the session?')) {
+                // Add the logic for leaving the session here
+                window.location.href = 'http://localhost/CodeWarriors/templates/join_session.html';
+            }
+        });
+    </script>
+</body>
+</html>

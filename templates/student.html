@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Interface</title>
+    <link rel="stylesheet" href="../static/student.css">
+</head>
+<body>
+    <header>
+        <img src="images/logo.png" alt="Logo" id="logo">
+        <div id="profile">
+            <img src="images/profile.png" alt="Student Profile" id="profile-pic">
+        </div>
+        <div id="progress-container">
+            <div id="progress-bar">
+                <div id="progress"></div>
+            </div>
+            <span id="progress-text">Progress: 70%</span>
+        </div>
+    </header>
+    <main>
+        <div id="activity-wrapper">
+            <div id="activity-header">
+                <h1 id="activity-title">Lecturer's Activities</h1>
+                <div id="countdown">Time left: <span id="time">2:00</span></div>
+            </div>
+            <div id="activity-container">
+                <!-- Questions will be dynamically added here -->
+            </div>
+            <button id="submitButton">Submit</button>
+        </div>
+    </main>
+    <script src="../static/student.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionType = urlParams.get('type') || 'type1';
+            
+            fetch(`/path_to_php_script.php?type=${questionType}`)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('activity-container');
+                    if (data.error) {
+                        container.innerHTML = `<p>${data.error}</p>`;
+                        return;
+                    }
+                    for (const [key, question] of Object.entries(data)) {
+                        if (question) {
+                            const questionDiv = document.createElement('div');
+                            questionDiv.className = 'question';
+                            questionDiv.innerHTML = `
+                                <p>${question}</p>
+                                <input type="text" name="answers[${key}]" required>
+                            `;
+                            container.appendChild(questionDiv);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching questions:', error));
+        });
+
+        document.getElementById('submitButton').addEventListener('click', function() {
+            const answers = {};
+            document.querySelectorAll('.question input').forEach(input => {
+                answers[input.name] = input.value;
+            });
+            
+            fetch('/submit_answers.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question_type: questionType, answers })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.href = 'analytics.html';
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error submitting answers:', error));
+        });
+    </script>
+</body>
+</html>
